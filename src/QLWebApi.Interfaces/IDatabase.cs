@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 namespace QLWebApi.Interfaces
 {
-    public interface IDB
+    public interface IDatabase
     {
-        string GetQLGDBVer();
+        Task<string> GetDatabaseVersionAsync();
     }
 }

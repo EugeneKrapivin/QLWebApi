@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using QLWebApi.DB;
 using QLWebApi.Interfaces;
 
 namespace QLWebApi
@@ -22,7 +23,6 @@ namespace QLWebApi
 
             if (env.IsEnvironment("Development"))
             {
-                // This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
                 builder.AddApplicationInsightsSettings(developerMode: true);
             }
 
@@ -30,17 +30,23 @@ namespace QLWebApi
             Configuration = builder.Build();
         }
 
-        public IConfigurationRoot Configuration { get; }
+        private IConfigurationRoot Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
             services.AddApplicationInsightsTelemetry(Configuration);
-
             services.AddMvc();
+            services.AddOptions();
 
-            services.AddSingleton<IDB, DB.DB>();
+            services.Configure<DatabaseConfiguration>(conf =>
+            {
+                conf.DataSource = @"VICQL\MSSQLSERVER2016";
+                conf.SecurityIntegrated = true;
+            });
+
+            services.AddSingleton<IDatabase, Database>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
@@ -48,10 +54,6 @@ namespace QLWebApi
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-
-            app.UseApplicationInsightsRequestTelemetry();
-
-            app.UseApplicationInsightsExceptionTelemetry();
 
             app.UseMvc();
         }
